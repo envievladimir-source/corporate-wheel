@@ -1,0 +1,28 @@
+{
+  "name": "corporate-wheel",
+  "version": "0.1.0",
+  "description": "Внутренняя корпоративная акция: гейт по email-домену, поздравление с юбилеем и колесо фортуны с фиксированным результатом",
+  "main": "server/index.js",
+  "bin": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node server/index.js",
+    "build:mac": "pkg . --targets node18-macos-x64,node18-macos-arm64 --output dist/corporate-wheel"
+  },
+  "dependencies": {
+    "cookie-parser": "^1.4.6",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.4.0"
+  },
+  "pkg": {
+    "assets": [],
+    "targets": [
+      "node18-macos-x64",
+      "node18-macos-arm64"
+    ]
+  },
+  "devDependencies": {
+    "@yao-pkg/pkg": "^6.21.0"
+  }
+}

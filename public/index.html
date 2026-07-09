@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Корпоративная акция</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<canvas id="confetti-canvas"></canvas>
+
+<header id="site-header">
+  <div class="logo-badge"><img src="logo.svg" alt="Evoplay" /></div>
+</header>
+
+<!-- Экран 1: гейт (email + страна) -->
+<section id="screen-gate" class="screen">
+  <div class="card">
+    <h1>Добро пожаловать 👋</h1>
+    <p class="subtitle">Введите рабочую почту и страну, где вы находитесь, чтобы принять участие в акции.</p>
+    <form id="gate-form" autocomplete="off">
+      <label for="email-input">Корпоративная почта</label>
+      <input id="email-input" type="email" placeholder="name@company.com" required />
+      <p id="domain-hint" class="hint"></p>
+
+      <label for="country-select">Страна</label>
+      <select id="country-select" required>
+        <option value="" disabled selected>Выберите страну</option>
+      </select>
+
+      <button type="submit" class="btn btn-primary">Продолжить</button>
+      <p id="gate-error" class="error"></p>
+    </form>
+  </div>
+</section>
+
+<!-- Экран 2: поздравление + колесо -->
+<section id="screen-main" class="screen hidden">
+  <div class="hero">
+    <h1 id="hero-title">Нашей компании исполняется <span id="anniv-years">10</span> лет! 🎉</h1>
+    <p class="hero-subtitle">Спасибо, что вы часть нашей команды. В честь юбилея — подарок для каждого!</p>
+  </div>
+
+  <div class="fact-card">
+    <span class="fact-icon">💡</span>
+    <p id="fact-text">А вы знали?</p>
+  </div>
+
+  <div class="wheel-wrap">
+    <div class="wheel-glow"></div>
+    <div class="lights-ring" id="lights-ring"></div>
+    <div class="pointer-wrap">
+      <svg width="40" height="46" viewBox="0 0 40 46">
+        <polygon points="20,46 2,10 38,10" fill="#f7c948" stroke="#a97a12" stroke-width="1.5" />
+        <circle cx="20" cy="9" r="7" fill="#f7c948" stroke="#a97a12" stroke-width="1.5" />
+      </svg>
+    </div>
+    <div class="wheel-ring">
+      <canvas id="wheel-canvas" width="440" height="440"></canvas>
+    </div>
+    <button id="spin-btn" class="btn btn-primary btn-spin">Крутить колесо</button>
+  </div>
+  <p id="spin-hint" class="hint center">Крутить можно только один раз — не пропустите свой шанс!</p>
+</section>
+
+<!-- Экран 3: уже участвовал -->
+<section id="screen-used" class="screen hidden">
+  <div class="card">
+    <h1>Упс! 🙈</h1>
+    <p id="used-message" class="subtitle">Вы уже участвовали в этой акции. Колесо можно крутить только один раз.</p>
+    <div id="used-prize" class="prize-box hidden">
+      <p class="prize-label">Ваш приз</p>
+      <p id="used-prize-title" class="prize-title"></p>
+    </div>
+  </div>
+</section>
+
+<!-- Модалка с супер призом -->
+<div id="modal-overlay" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-badge">🏆</div>
+    <h2 id="modal-title">СУПЕР ПРИЗ!</h2>
+    <p id="modal-description" class="modal-description"></p>
+    <button id="modal-close" class="btn btn-primary">Отлично!</button>
+  </div>
+</div>
+
+<button id="sound-toggle" title="Включить/выключить звук">🔊</button>
+
+<button id="dev-reset-btn" title="Только для теста: очищает cookie и все записи, чтобы можно было пройти сценарий заново">
+  🔄 Сбросить тест
+</button>
+
+<script src="app.js"></script>
+</body>
+</html>
