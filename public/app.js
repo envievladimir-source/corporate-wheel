@@ -408,6 +408,9 @@
     document.getElementById('anniv-pill-text').textContent = 'Нам ' + config.anniversaryYears + ' років';
     document.getElementById('hero-subtitle').textContent =
       config.anniversaryYears + ' років гри, драйву та перемог';
+    document.getElementById('facts-subtitle').textContent =
+      config.anniversaryYears + ' років — це багато історій. Ось декілька з них.';
+    document.title = (config.companyName || 'Evoplay') + ' — ' + config.anniversaryYears + ' років';
 
     renderWaveWord((config.companyName || 'EVOPLAY').toUpperCase() + '!');
     renderSectors(config.superPrizeTitle || 'ДЖЕКПОТ');
