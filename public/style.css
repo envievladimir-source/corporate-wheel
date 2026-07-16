@@ -157,6 +157,11 @@ body {
   margin-top: 14px;
 }
 
+#custom-country-field {
+  display: flex;
+  flex-direction: column;
+}
+
 .gate-form input,
 .gate-form select {
   padding: 16px 18px;

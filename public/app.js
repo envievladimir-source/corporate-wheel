@@ -394,6 +394,8 @@
     return div.innerHTML;
   }
 
+  var OTHER_COUNTRY_LABEL = 'Інша';
+
   function initContent(config) {
     var select = document.getElementById('country-select');
     config.countries.forEach(function (country) {
@@ -417,12 +419,29 @@
     renderFacts(config);
   }
 
+  document.getElementById('country-select').addEventListener('change', function () {
+    var isOther = this.value === OTHER_COUNTRY_LABEL;
+    var field = document.getElementById('custom-country-field');
+    var input = document.getElementById('custom-country-input');
+    field.classList.toggle('hidden', !isOther);
+    if (!isOther) input.value = '';
+  });
+
   document.getElementById('gate-form').addEventListener('submit', function (e) {
     e.preventDefault();
     var email = document.getElementById('email-input').value.trim();
     var country = document.getElementById('country-select').value;
     var errorEl = document.getElementById('gate-error');
     errorEl.textContent = '';
+
+    if (country === OTHER_COUNTRY_LABEL) {
+      var customCountry = document.getElementById('custom-country-input').value.trim();
+      if (!customCountry) {
+        errorEl.textContent = 'Впиши назву своєї країни.';
+        return;
+      }
+      country = customCountry;
+    }
 
     api('/api/register', { method: 'POST', body: JSON.stringify({ email: email, country: country }) }).then(
       function (res) {
