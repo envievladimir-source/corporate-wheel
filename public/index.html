@@ -1,96 +1,113 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="uk">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Корпоративная акция</title>
+<title>Evoplay — 10 років</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800;900&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<canvas id="confetti-canvas"></canvas>
-
-<header id="site-header">
-  <div class="logo-badge"><img src="logo.svg" alt="Evoplay" /></div>
-</header>
-
-<!-- Экран 1: гейт (email + страна) -->
-<section id="screen-gate" class="screen">
-  <div class="card">
-    <h1>Добро пожаловать 👋</h1>
-    <p class="subtitle">Введите рабочую почту и страну, где вы находитесь, чтобы принять участие в акции.</p>
-    <form id="gate-form" autocomplete="off">
-      <label for="email-input">Корпоративная почта</label>
-      <input id="email-input" type="email" placeholder="name@company.com" required />
-      <p id="domain-hint" class="hint"></p>
-
-      <label for="country-select">Страна</label>
-      <select id="country-select" required>
-        <option value="" disabled selected>Выберите страну</option>
-      </select>
-
-      <button type="submit" class="btn btn-primary">Продолжить</button>
-      <p id="gate-error" class="error"></p>
-    </form>
-  </div>
-</section>
-
-<!-- Экран 2: поздравление + колесо -->
-<section id="screen-main" class="screen hidden">
-  <div class="hero">
-    <h1 id="hero-title">Нашей компании исполняется <span id="anniv-years">10</span> лет! 🎉</h1>
-    <p class="hero-subtitle">Спасибо, что вы часть нашей команды. В честь юбилея — подарок для каждого!</p>
-  </div>
-
-  <div class="fact-card">
-    <span class="fact-icon">💡</span>
-    <p id="fact-text">А вы знали?</p>
-  </div>
-
-  <div class="wheel-wrap">
-    <div class="wheel-glow"></div>
-    <div class="lights-ring" id="lights-ring"></div>
-    <div class="pointer-wrap">
-      <svg width="40" height="46" viewBox="0 0 40 46">
-        <polygon points="20,46 2,10 38,10" fill="#f7c948" stroke="#a97a12" stroke-width="1.5" />
-        <circle cx="20" cy="9" r="7" fill="#f7c948" stroke="#a97a12" stroke-width="1.5" />
-      </svg>
-    </div>
-    <div class="wheel-ring">
-      <canvas id="wheel-canvas" width="440" height="440"></canvas>
-    </div>
-    <button id="spin-btn" class="btn btn-primary btn-spin">Крутить колесо</button>
-  </div>
-  <p id="spin-hint" class="hint center">Крутить можно только один раз — не пропустите свой шанс!</p>
-</section>
-
-<!-- Экран 3: уже участвовал -->
-<section id="screen-used" class="screen hidden">
-  <div class="card">
-    <h1>Упс! 🙈</h1>
-    <p id="used-message" class="subtitle">Вы уже участвовали в этой акции. Колесо можно крутить только один раз.</p>
-    <div id="used-prize" class="prize-box hidden">
-      <p class="prize-label">Ваш приз</p>
-      <p id="used-prize-title" class="prize-title"></p>
-    </div>
-  </div>
-</section>
-
-<!-- Модалка с супер призом -->
-<div id="modal-overlay" class="modal-overlay hidden">
-  <div class="modal">
-    <div class="modal-badge">🏆</div>
-    <h2 id="modal-title">СУПЕР ПРИЗ!</h2>
-    <p id="modal-description" class="modal-description"></p>
-    <button id="modal-close" class="btn btn-primary">Отлично!</button>
-  </div>
+<!-- Шарики (только на экране празднования) -->
+<div id="balloons" class="balloons hidden">
+  <div class="balloon" style="left:6%; animation-delay:0s, 0s;"><div class="balloon-body" style="width:54px;height:66px;background:#00A0FA;opacity:.85;animation-duration:19s,6s;"></div><div class="balloon-string" style="height:70px;"></div></div>
+  <div class="balloon" style="left:16%;"><div class="balloon-body" style="width:40px;height:50px;background:#0B0D12;opacity:.75;animation-duration:24s,7s;animation-delay:4s,0s;"></div><div class="balloon-string" style="height:56px;"></div></div>
+  <div class="balloon" style="left:84%;"><div class="balloon-body" style="width:60px;height:74px;background:#66C6FC;opacity:.85;animation-duration:21s,5.5s;animation-delay:2s,0s;"></div><div class="balloon-string" style="height:76px;"></div></div>
+  <div class="balloon" style="left:74%;"><div class="balloon-body" style="width:42px;height:52px;background:#00A0FA;opacity:.7;animation-duration:26s,8s;animation-delay:9s,0s;"></div><div class="balloon-string" style="height:58px;"></div></div>
+  <div class="balloon" style="left:45%;"><div class="balloon-body" style="width:36px;height:46px;background:#0B0D12;opacity:.6;animation-duration:29s,7.5s;animation-delay:12s,0s;"></div><div class="balloon-string" style="height:50px;"></div></div>
+  <div class="balloon" style="left:93%;"><div class="balloon-body" style="width:46px;height:58px;background:#66C6FC;opacity:.7;animation-duration:23s,6.5s;animation-delay:6s,0s;"></div><div class="balloon-string" style="height:60px;"></div></div>
 </div>
 
-<button id="sound-toggle" title="Включить/выключить звук">🔊</button>
+<canvas id="confetti-canvas"></canvas>
 
-<button id="dev-reset-btn" title="Только для теста: очищает cookie и все записи, чтобы можно было пройти сценарий заново">
-  🔄 Сбросить тест
-</button>
+<div class="page">
+
+  <header class="site-header">
+    <img src="logo.png" alt="Evoplay" class="header-logo" />
+    <div class="anniv-pill"><span class="anniv-dot"></span><span id="anniv-pill-text">Нам 10 років</span></div>
+  </header>
+
+  <!-- Экран 1: гейт (пошта + країна) -->
+  <section id="screen-gate" class="screen-gate">
+    <h1 class="gate-title">Перш ніж крутити<br /><span class="accent">колесо</span></h1>
+    <p class="gate-subtitle">Введи робочу пошту та країну, де ти зараз — і святкове колесо вже чекає на тебе.</p>
+
+    <form id="gate-form" class="gate-form" autocomplete="off">
+      <label for="email-input">Корпоративна пошта</label>
+      <input id="email-input" type="email" placeholder="name@company.com" required />
+      <p id="domain-hint" class="gate-hint"></p>
+
+      <label for="country-select">Країна</label>
+      <select id="country-select" required>
+        <option value="" disabled selected>Обери країну</option>
+      </select>
+
+      <button type="submit" class="btn-pill btn-blue">Продовжити</button>
+      <p id="gate-error" class="gate-error"></p>
+    </form>
+  </section>
+
+  <!-- Экран 2: привітання + колесо + факти -->
+  <section id="screen-main" class="screen-main hidden">
+    <section class="hero">
+      <h1 class="hero-title">
+        З днем народження,<br />
+        <span id="wave-word" class="wave-word accent"></span>
+      </h1>
+      <p class="hero-subtitle" id="hero-subtitle">10 років гри, драйву та перемог</p>
+      <p class="hero-text">Крути святкове колесо фортуни — сьогодні щастить кожному з нас.</p>
+    </section>
+
+    <section class="wheel-section">
+      <div class="wheel-outer">
+        <div class="lights-ring" id="lights-ring"></div>
+        <div class="pointer"></div>
+        <div class="wheel-shadow"></div>
+        <div id="wheel-disc" class="wheel-disc">
+          <div id="wheel-sectors" class="wheel-sectors"></div>
+        </div>
+        <div class="wheel-hub"><img src="logo.png" alt="" /></div>
+      </div>
+
+      <button id="spin-btn" class="btn-pill btn-blue btn-spin">Крутити колесо</button>
+      <p id="spinning-text" class="spinning-text hidden">Хай щастить…</p>
+
+      <div id="result-card" class="result-card hidden">
+        <p class="result-eyebrow">Вітаємо!</p>
+        <p id="result-prize" class="result-prize">ДЖЕКПОТ</p>
+        <p id="result-desc" class="result-desc"></p>
+      </div>
+    </section>
+
+    <section class="facts-section">
+      <h2 class="facts-title">Факти <span class="accent">про нас</span></h2>
+      <p class="facts-subtitle">10 років — це багато історій. Ось декілька з них.</p>
+      <div id="facts-grid" class="facts-grid"></div>
+    </section>
+
+    <footer class="site-footer">
+      <span id="footer-left">EVOPLAY · 2016–2026</span>
+      <span>Зроблено з любов'ю для команди</span>
+    </footer>
+  </section>
+
+  <!-- Экран 3: вже брав участь -->
+  <section id="screen-used" class="screen-gate hidden">
+    <h1 class="gate-title">Упс! <span class="accent">Ти вже тут був</span></h1>
+    <p id="used-message" class="gate-subtitle">Ти вже брав участь в акції. Колесо крутиться лише один раз.</p>
+    <div id="used-prize" class="result-card hidden" style="position:static; margin: 24px auto 0;">
+      <p class="result-eyebrow">Твій приз</p>
+      <p id="used-prize-title" class="result-prize"></p>
+    </div>
+  </section>
+
+</div>
+
+<button id="sound-toggle" title="Увімкнути/вимкнути звук">🔊</button>
+<button id="dev-reset-btn" title="Тільки для тесту: скидає cookie та всі записи">🔄 Скинути тест</button>
 
 <script src="app.js"></script>
 </body>

@@ -6,94 +6,23 @@
     main: document.getElementById('screen-main'),
     used: document.getElementById('screen-used'),
   };
-  var modalOverlay = document.getElementById('modal-overlay');
-  var modalTitle = document.getElementById('modal-title');
-  var modalDescription = document.getElementById('modal-description');
+  var balloonsEl = document.getElementById('balloons');
 
   function showScreen(name) {
     Object.keys(screens).forEach(function (key) {
       screens[key].classList.toggle('hidden', key !== name);
     });
+    balloonsEl.classList.toggle('hidden', name !== 'main');
+    // Колесо (і, отже, ширина для розрахунку кільця вогників) видиме лише на
+    // екрані main — перераховуємо позиції вогників саме в момент його показу.
+    if (name === 'main') buildLights();
   }
-
-  function showModal(title, description) {
-    modalTitle.textContent = title;
-    modalDescription.textContent = description;
-    modalOverlay.classList.remove('hidden');
-  }
-
-  document.getElementById('modal-close').addEventListener('click', function () {
-    modalOverlay.classList.add('hidden');
-  });
 
   document.getElementById('dev-reset-btn').addEventListener('click', function () {
     fetch('/api/dev/reset-session', { method: 'POST' }).then(function () {
       window.location.reload();
     });
   });
-
-  // ---------- Конфетти / салют ----------
-  var confettiCanvas = document.getElementById('confetti-canvas');
-  var ctx = confettiCanvas.getContext('2d');
-  var confettiParticles = [];
-  var confettiRunning = false;
-  var confettiColors = ['#f7c948', '#6c4fd6', '#ff6b6b', '#4fd6a0', '#f5f1ff'];
-
-  function resizeCanvas() {
-    confettiCanvas.width = window.innerWidth;
-    confettiCanvas.height = window.innerHeight;
-  }
-  window.addEventListener('resize', resizeCanvas);
-  resizeCanvas();
-
-  function spawnConfettiBurst(count) {
-    for (var i = 0; i < count; i++) {
-      confettiParticles.push({
-        x: Math.random() * confettiCanvas.width,
-        y: -20 - Math.random() * 100,
-        vx: (Math.random() - 0.5) * 2.5,
-        vy: 2 + Math.random() * 3,
-        size: 5 + Math.random() * 6,
-        color: confettiColors[Math.floor(Math.random() * confettiColors.length)],
-        rotation: Math.random() * Math.PI,
-        rotationSpeed: (Math.random() - 0.5) * 0.2,
-        life: 0,
-      });
-    }
-  }
-
-  function confettiTick() {
-    ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
-    confettiParticles.forEach(function (p) {
-      p.x += p.vx;
-      p.y += p.vy;
-      p.rotation += p.rotationSpeed;
-      p.life++;
-      ctx.save();
-      ctx.translate(p.x, p.y);
-      ctx.rotate(p.rotation);
-      ctx.fillStyle = p.color;
-      ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
-      ctx.restore();
-    });
-    confettiParticles = confettiParticles.filter(function (p) {
-      return p.y < confettiCanvas.height + 40;
-    });
-
-    if (confettiRunning && Math.random() < 0.4) spawnConfettiBurst(2);
-    if (confettiParticles.length > 0 || confettiRunning) {
-      requestAnimationFrame(confettiTick);
-    }
-  }
-
-  function startCelebration(durationMs) {
-    confettiRunning = true;
-    spawnConfettiBurst(80);
-    requestAnimationFrame(confettiTick);
-    setTimeout(function () {
-      confettiRunning = false;
-    }, durationMs || 4000);
-  }
 
   // ---------- Звук ----------
   var SoundEngine = (function () {
@@ -168,167 +97,111 @@
     SoundEngine.warmUp();
   });
 
-  // ---------- Колесо фортуны ----------
-  var PRIZES = [
-    { title: 'СУПЕР ПРИЗ', color: '#f7c948', textColor: '#241b3a' },
-    { title: 'Powerbank', color: '#6c4fd6', textColor: '#fff' },
-    { title: 'Доп. день отпуска', color: '#3b2a63', textColor: '#fff' },
-    { title: 'Подарочная карта', color: '#4fd6a0', textColor: '#1a1a1a' },
-    { title: 'Билеты в кино', color: '#6c4fd6', textColor: '#fff' },
-    { title: 'Кофемашина', color: '#3b2a63', textColor: '#fff' },
-    { title: 'Мерч компании', color: '#4fd6a0', textColor: '#1a1a1a' },
-    { title: 'Шампанское', color: '#6c4fd6', textColor: '#fff' },
-  ];
+  // ---------- Конфетті ----------
+  var confettiCanvas = document.getElementById('confetti-canvas');
+  var cctx = confettiCanvas.getContext('2d');
+  var CONFETTI_COLORS = ['#00A0FA', '#66C6FC', '#0B0D12', '#FFD166', '#ffffff'];
 
-  var wheelCanvas = document.getElementById('wheel-canvas');
-  var wctx = wheelCanvas.getContext('2d');
-  var wheelRadius = wheelCanvas.width / 2;
-  var segCount = PRIZES.length;
+  function resizeConfettiCanvas() {
+    confettiCanvas.width = window.innerWidth;
+    confettiCanvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resizeConfettiCanvas);
+  resizeConfettiCanvas();
+
+  function launchConfetti() {
+    var parts = [];
+    for (var i = 0; i < 180; i++) {
+      parts.push({
+        x: Math.random() * confettiCanvas.width,
+        y: -20 - Math.random() * confettiCanvas.height * 0.5,
+        w: 6 + Math.random() * 8,
+        h: 10 + Math.random() * 10,
+        vy: 2.5 + Math.random() * 3.5,
+        vx: -1.5 + Math.random() * 3,
+        rot: Math.random() * Math.PI,
+        vr: -0.1 + Math.random() * 0.2,
+        c: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+      });
+    }
+    var start = performance.now();
+    function tick(now) {
+      cctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+      var alive = false;
+      parts.forEach(function (p) {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.rot += p.vr;
+        if (p.y < confettiCanvas.height + 30) alive = true;
+        cctx.save();
+        cctx.translate(p.x, p.y);
+        cctx.rotate(p.rot);
+        cctx.fillStyle = p.c;
+        cctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        cctx.restore();
+      });
+      if (alive && now - start < 6000) {
+        requestAnimationFrame(tick);
+      } else {
+        cctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+      }
+    }
+    requestAnimationFrame(tick);
+  }
+
+  // ---------- Колесо ----------
+  var PRIZE_LABELS = ['МЕРЧ EVOPLAY', 'ПІЦА-ПАТІ', 'СТІКЕРПАК', 'КАВА З CEO', 'ОБІЙМИ HR', 'ВИХІДНИЙ', 'ЩЕ РАЗ'];
+  var segCount = 8;
   var segDeg = 360 / segCount;
 
-  function drawWheel() {
-    var cx = wheelRadius;
-    var cy = wheelRadius;
-    wctx.clearRect(0, 0, wheelCanvas.width, wheelCanvas.height);
+  var wheelDisc = document.getElementById('wheel-disc');
+  var wheelSectorsEl = document.getElementById('wheel-sectors');
+  var wheelOuter = document.querySelector('.wheel-outer');
+  var pointerEl = document.querySelector('.pointer');
 
-    for (var i = 0; i < segCount; i++) {
-      var startDeg = -90 - segDeg / 2 + i * segDeg;
-      var endDeg = startDeg + segDeg;
-      var startRad = (startDeg * Math.PI) / 180;
-      var endRad = (endDeg * Math.PI) / 180;
-
-      wctx.beginPath();
-      wctx.moveTo(cx, cy);
-      wctx.arc(cx, cy, wheelRadius - 4, startRad, endRad);
-      wctx.closePath();
-      wctx.fillStyle = PRIZES[i].color;
-      wctx.fill();
-      wctx.strokeStyle = 'rgba(0,0,0,0.28)';
-      wctx.lineWidth = 2;
-      wctx.stroke();
-
-      var midDeg = startDeg + segDeg / 2;
-      var midRad = (midDeg * Math.PI) / 180;
-      wctx.save();
-      wctx.translate(cx + Math.cos(midRad) * (wheelRadius * 0.6), cy + Math.sin(midRad) * (wheelRadius * 0.6));
-      wctx.rotate(midRad + Math.PI / 2);
-      wctx.fillStyle = PRIZES[i].textColor;
-      wctx.font = 'bold 13px Segoe UI, sans-serif';
-      wctx.textAlign = 'center';
-      wctx.textBaseline = 'middle';
-      wctx.shadowColor = 'rgba(0,0,0,0.35)';
-      wctx.shadowBlur = 3;
-      wrapText(PRIZES[i].title, 0, 0);
-      wctx.restore();
-    }
-
-    // Глянцевый блик по всему колесу
-    wctx.save();
-    wctx.beginPath();
-    wctx.arc(cx, cy, wheelRadius - 4, 0, Math.PI * 2);
-    wctx.closePath();
-    wctx.clip();
-    var gloss = wctx.createRadialGradient(cx, cy * 0.55, wheelRadius * 0.1, cx, cy, wheelRadius);
-    gloss.addColorStop(0, 'rgba(255,255,255,0.32)');
-    gloss.addColorStop(0.55, 'rgba(255,255,255,0.06)');
-    gloss.addColorStop(1, 'rgba(0,0,0,0.18)');
-    wctx.fillStyle = gloss;
-    wctx.fillRect(0, 0, wheelCanvas.width, wheelCanvas.height);
-    wctx.restore();
-
-    // Огоньки по кромке
-    var dotCount = segCount * 3;
-    for (var d = 0; d < dotCount; d++) {
-      var dotDeg = (360 / dotCount) * d;
-      var dotRad = (dotDeg * Math.PI) / 180;
-      var dx = cx + Math.cos(dotRad) * (wheelRadius - 10);
-      var dy = cy + Math.sin(dotRad) * (wheelRadius - 10);
-      wctx.beginPath();
-      wctx.arc(dx, dy, 3.2, 0, Math.PI * 2);
-      wctx.fillStyle = d % 2 === 0 ? '#fff6da' : '#f7c948';
-      wctx.fill();
-    }
-
-    // Центральная втулка
-    var hub = wctx.createRadialGradient(cx - 6, cy - 8, 2, cx, cy, wheelRadius * 0.13);
-    hub.addColorStop(0, '#fffdf5');
-    hub.addColorStop(1, '#f0c04a');
-    wctx.beginPath();
-    wctx.arc(cx, cy, wheelRadius * 0.13, 0, Math.PI * 2);
-    wctx.fillStyle = hub;
-    wctx.fill();
-    wctx.lineWidth = 2;
-    wctx.strokeStyle = '#a97a12';
-    wctx.stroke();
-  }
-
-  function wrapText(text, x, y) {
-    var words = text.split(' ');
-    var lines = [];
-    var current = '';
-    words.forEach(function (w) {
-      var test = current ? current + ' ' + w : w;
-      if (test.length > 12 && current) {
-        lines.push(current);
-        current = w;
-      } else {
-        current = test;
-      }
+  function renderSectors(jackpotTitle) {
+    var names = [jackpotTitle].concat(PRIZE_LABELS);
+    wheelSectorsEl.innerHTML = '';
+    names.forEach(function (name, i) {
+      var deg = i * segDeg + segDeg / 2;
+      var sector = document.createElement('div');
+      sector.className = 'wheel-sector' + (i === 0 ? ' jackpot' : '');
+      sector.style.transform = 'rotate(' + deg + 'deg)';
+      var span = document.createElement('span');
+      span.textContent = name;
+      sector.appendChild(span);
+      wheelSectorsEl.appendChild(sector);
     });
-    if (current) lines.push(current);
-    var lineHeight = 14;
-    var startY = y - ((lines.length - 1) * lineHeight) / 2;
-    lines.forEach(function (line, idx) {
-      wctx.fillText(line, x, startY + idx * lineHeight);
-    });
-  }
-
-  drawWheel();
-
-  var currentRotation = 0;
-  var pointerWrap = document.querySelector('.pointer-wrap');
-  var tickIntervalId = null;
-
-  function startPointerTick() {
-    if (pointerWrap) pointerWrap.classList.add('ticking');
-    if (tickIntervalId) clearInterval(tickIntervalId);
-    tickIntervalId = setInterval(function () {
-      SoundEngine.tick();
-    }, 120);
-  }
-
-  function stopPointerTick() {
-    if (pointerWrap) pointerWrap.classList.remove('ticking');
-    if (tickIntervalId) {
-      clearInterval(tickIntervalId);
-      tickIntervalId = null;
-    }
   }
 
   // ---------- Огоньки вокруг колеса ----------
   var lightsRing = document.getElementById('lights-ring');
-  var LIGHT_COUNT = 16;
-  var LIGHT_RADIUS = 236;
-  var LIGHT_PALETTE = ['#f7c948', '#1dc8f5', '#ff6b6b', '#6c4fd6', '#4fd6a0', '#ffffff'];
+  var LIGHT_COUNT = 20;
+  var LIGHT_PALETTE = ['#FFD166', '#00A0FA', '#66C6FC', '#0B0D12', '#33B4FB', '#ffffff'];
   var lightDots = [];
 
-  for (var li = 0; li < LIGHT_COUNT; li++) {
-    var dot = document.createElement('div');
-    dot.className = 'light-dot';
-    var ang = ((360 / LIGHT_COUNT) * li * Math.PI) / 180;
-    dot.style.left = Math.cos(ang) * LIGHT_RADIUS + 'px';
-    dot.style.top = Math.sin(ang) * LIGHT_RADIUS + 'px';
-    lightsRing.appendChild(dot);
-    lightDots.push(dot);
+  function buildLights() {
+    lightsRing.innerHTML = '';
+    lightDots = [];
+    var radius = wheelOuter.offsetWidth / 2 + 16;
+    for (var li = 0; li < LIGHT_COUNT; li++) {
+      var dot = document.createElement('div');
+      dot.className = 'light-dot';
+      var ang = ((360 / LIGHT_COUNT) * li * Math.PI) / 180;
+      dot.style.left = Math.cos(ang) * radius + 'px';
+      dot.style.top = Math.sin(ang) * radius + 'px';
+      lightsRing.appendChild(dot);
+      lightDots.push(dot);
+    }
   }
+  window.addEventListener('resize', buildLights);
 
   function setLightsIdle() {
     lightDots.forEach(function (d) {
-      d.style.background = '#f7c948';
-      d.style.boxShadow = '0 0 8px 2px rgba(247, 201, 72, 0.7)';
+      d.style.background = '#FFD166';
+      d.style.boxShadow = '0 0 8px 2px rgba(255, 209, 102, 0.7)';
     });
   }
-  setLightsIdle();
 
   var lightsInterval = null;
   var lightsTick = 0;
@@ -355,7 +228,7 @@
   function flashLightsCelebrate(times, onComplete) {
     stopLightsChase();
     var count = 0;
-    var flashColors = ['#ffffff', '#f7c948'];
+    var flashColors = ['#ffffff', '#FFD166'];
     var flashInterval = setInterval(function () {
       var color = flashColors[count % 2];
       lightDots.forEach(function (d) {
@@ -371,7 +244,24 @@
     }, 140);
   }
 
-  // ---------- Вращение колеса ----------
+  // ---------- Тіканя указателя ----------
+  var tickIntervalId = null;
+  function startPointerTick() {
+    pointerEl.classList.add('ticking');
+    if (tickIntervalId) clearInterval(tickIntervalId);
+    tickIntervalId = setInterval(function () { SoundEngine.tick(); }, 120);
+  }
+  function stopPointerTick() {
+    pointerEl.classList.remove('ticking');
+    if (tickIntervalId) {
+      clearInterval(tickIntervalId);
+      tickIntervalId = null;
+    }
+  }
+
+  // ---------- Обертання колеса ----------
+  var currentRotation = 0;
+
   function runRotationPhase(target, duration, easing, onPhaseDone) {
     var finished = false;
     var fallbackTimer = setTimeout(finish, duration + 300);
@@ -380,7 +270,7 @@
       if (finished) return;
       finished = true;
       clearTimeout(fallbackTimer);
-      wheelCanvas.removeEventListener('transitionend', onTransitionEnd);
+      wheelDisc.removeEventListener('transitionend', onTransitionEnd);
       onPhaseDone && onPhaseDone();
     }
 
@@ -388,20 +278,18 @@
       if (!e || e.propertyName === 'transform') finish();
     }
 
-    wheelCanvas.addEventListener('transitionend', onTransitionEnd);
-    wheelCanvas.style.transition = 'transform ' + duration + 'ms ' + easing;
-    void wheelCanvas.offsetHeight; // форсируем reflow, чтобы смена transition точно применилась до смены transform
-    wheelCanvas.style.transform = 'rotate(' + target + 'deg)';
+    wheelDisc.addEventListener('transitionend', onTransitionEnd);
+    wheelDisc.style.transition = 'transform ' + duration + 'ms ' + easing;
+    void wheelDisc.offsetHeight; // форсуємо reflow, щоб зміна transition точно застосувалась до зміни transform
+    wheelDisc.style.transform = 'rotate(' + target + 'deg)';
   }
 
-  function spinToSuperPrize(onDone) {
+  function spinToJackpot(onDone) {
     var spins = 6;
-    var jitter = (Math.random() - 0.5) * 2 * 10; // остаёмся внутри сектора СУПЕР ПРИЗ
-    var start = currentRotation;
-    var finalTarget = start + spins * 360 + jitter - (start % 360);
-
-    // Промежуточная точка: колесо почти замирает на соседнем секторе,
-    // едва не доходя до границы с СУПЕР ПРИЗом — создаёт эффект "затаили дыхание"
+    var jitter = (Math.random() * 24) - 12; // лишаємось у межах сектору ДЖЕКПОТ (±22.5°)
+    // Джекпот-сектор займає 0–45°; щоб його центр (22.5°) опинився під покажчиком (0° згори),
+    // потрібно повернути колесо на -22.5° (з урахуванням повних обертів для ефекту).
+    var finalTarget = 360 * spins - 22.5 + jitter;
     var teaseTarget = finalTarget - segDeg * 0.88;
 
     currentRotation = finalTarget;
@@ -409,10 +297,10 @@
     startPointerTick();
     startLightsChase();
 
-    runRotationPhase(teaseTarget, 4200, 'cubic-bezier(0.1, 0.7, 0.15, 1)', function () {
+    runRotationPhase(teaseTarget, 4200, 'cubic-bezier(0.12, 0.6, 0.08, 1)', function () {
       stopPointerTick();
 
-      // Пауза "на грани" перед финальным доворотом
+      // Пауза "на межі" перед фінальним доворотом
       setTimeout(function () {
         startPointerTick();
         runRotationPhase(finalTarget, 900, 'cubic-bezier(0.33, 0, 0.2, 1)', function () {
@@ -424,7 +312,59 @@
     });
   }
 
-  // ---------- Состояние / API ----------
+  function setWheelInstant(deg) {
+    wheelDisc.style.transition = 'none';
+    wheelDisc.style.transform = 'rotate(' + deg + 'deg)';
+    currentRotation = deg;
+  }
+
+  // ---------- Хвиля в заголовку ----------
+  function renderWaveWord(word) {
+    var el = document.getElementById('wave-word');
+    el.innerHTML = '';
+    word.split('').forEach(function (ch, i) {
+      var span = document.createElement('span');
+      span.textContent = ch;
+      span.style.animationDelay = (i * 0.08) + 's';
+      el.appendChild(span);
+    });
+  }
+
+  // ---------- Факти ----------
+  function renderFacts(config) {
+    var grid = document.getElementById('facts-grid');
+    grid.innerHTML = '';
+
+    var yearsCard = document.createElement('div');
+    yearsCard.className = 'fact-card dark';
+    yearsCard.innerHTML =
+      '<p class="fact-num">' + escapeHtml(config.anniversaryYears) + '</p>' +
+      '<p class="fact-label">Років на ринку</p>' +
+      '<p class="fact-text">Від першої гри до глобальної команди.</p>';
+    grid.appendChild(yearsCard);
+
+    var facts = (config.facts && config.facts.length ? config.facts : []).slice(0, 3);
+    while (facts.length < 3) facts.push(null);
+
+    facts.forEach(function (fact) {
+      var card = document.createElement('div');
+      card.className = 'fact-card';
+      if (fact) {
+        card.innerHTML =
+          '<p class="fact-num">✦</p>' +
+          '<p class="fact-text" style="font-size:14px; color:#3d454c; font-weight:600; margin-top:10px;">' +
+          escapeHtml(fact) + '</p>';
+      } else {
+        card.innerHTML =
+          '<p class="fact-num">···</p>' +
+          '<p class="fact-label">Факт</p>' +
+          '<p class="fact-text">Місце для цифри та історії — оновимо разом.</p>';
+      }
+      grid.appendChild(card);
+    });
+  }
+
+  // ---------- Стан / API ----------
   function api(path, options) {
     return fetch(path, Object.assign({ headers: { 'Content-Type': 'application/json' } }, options)).then(
       function (res) {
@@ -437,7 +377,7 @@
 
   function renderUsedScreen(message, prize) {
     document.getElementById('used-message').textContent =
-      message || 'Вы уже участвовали в этой акции. Колесо можно крутить только один раз.';
+      message || 'Ти вже брав участь в акції. Колесо крутиться лише один раз.';
     var prizeBox = document.getElementById('used-prize');
     if (prize) {
       prizeBox.classList.remove('hidden');
@@ -448,7 +388,13 @@
     showScreen('used');
   }
 
-  function initGateForm(config) {
+  function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.textContent = String(str);
+    return div.innerHTML;
+  }
+
+  function initContent(config) {
     var select = document.getElementById('country-select');
     config.countries.forEach(function (country) {
       var opt = document.createElement('option');
@@ -457,41 +403,15 @@
       select.appendChild(opt);
     });
     document.getElementById('domain-hint').textContent =
-      'Доступно только для почты: ' + config.allowedDomainsHint;
-    document.getElementById('hero-title').innerHTML =
-      'Компании ' + escapeHtml(config.companyName) + ' исполняется <span id="anniv-years">' +
-      escapeHtml(config.anniversaryYears) + '</span> лет! 🎉';
-  }
+      'Доступно лише для пошти: ' + config.allowedDomainsHint;
 
-  function escapeHtml(str) {
-    var div = document.createElement('div');
-    div.textContent = String(str);
-    return div.innerHTML;
-  }
+    document.getElementById('anniv-pill-text').textContent = 'Нам ' + config.anniversaryYears + ' років';
+    document.getElementById('hero-subtitle').textContent =
+      config.anniversaryYears + ' років гри, драйву та перемог';
 
-  // ---------- Факты о компании ----------
-  var factList = [];
-  var factIndex = 0;
-
-  function renderFact() {
-    var el = document.getElementById('fact-text');
-    el.style.opacity = 0;
-    setTimeout(function () {
-      el.textContent = factList[factIndex];
-      el.style.opacity = 1;
-    }, 250);
-  }
-
-  function startFactsCycle(facts) {
-    factList = facts && facts.length ? facts : ['Скоро здесь появится интересный факт о компании!'];
-    factIndex = 0;
-    document.getElementById('fact-text').textContent = factList[0];
-    if (factList.length > 1) {
-      setInterval(function () {
-        factIndex = (factIndex + 1) % factList.length;
-        renderFact();
-      }, 6000);
-    }
+    renderWaveWord((config.companyName || 'EVOPLAY').toUpperCase() + '!');
+    renderSectors(config.superPrizeTitle || 'ДЖЕКПОТ');
+    renderFacts(config);
   }
 
   document.getElementById('gate-form').addEventListener('submit', function (e) {
@@ -505,54 +425,58 @@
       function (res) {
         if (res.ok) {
           showScreen('main');
-          startCelebration(5000);
         } else if (res.status === 409 && res.data.error === 'already_registered' && !res.data.spun) {
           showScreen('main');
-          startCelebration(3000);
         } else if (res.status === 409) {
           renderUsedScreen(res.data.message, res.data.prize);
         } else {
-          errorEl.textContent = res.data.message || 'Что-то пошло не так, попробуйте снова.';
+          errorEl.textContent = res.data.message || 'Щось пішло не так, спробуй ще раз.';
         }
       }
     ).catch(function () {
-      errorEl.textContent = 'Не удалось связаться с сервером. Попробуйте ещё раз.';
+      errorEl.textContent = 'Не вдалося зв’язатися з сервером. Спробуй ще раз.';
     });
   });
 
   document.getElementById('spin-btn').addEventListener('click', function () {
     var btn = document.getElementById('spin-btn');
     btn.disabled = true;
-    SoundEngine.warmUp(); // инициализируем AudioContext в рамках пользовательского клика
+    document.getElementById('spinning-text').classList.remove('hidden');
+    SoundEngine.warmUp(); // ініціалізуємо AudioContext у межах кліку користувача
 
     api('/api/spin', { method: 'POST' }).then(function (res) {
       if (res.ok) {
-        spinToSuperPrize(function () {
-          startCelebration(6000);
-          showModal(res.data.prize, res.data.description);
+        spinToJackpot(function () {
+          launchConfetti();
+          btn.classList.add('hidden');
+          document.getElementById('spinning-text').classList.add('hidden');
+          document.getElementById('result-prize').textContent = res.data.prize;
+          document.getElementById('result-desc').textContent = res.data.description;
+          document.getElementById('result-card').classList.remove('hidden');
         });
       } else if (res.status === 409) {
+        document.getElementById('spinning-text').classList.add('hidden');
         renderUsedScreen(res.data.message, res.data.prize);
       } else {
         btn.disabled = false;
-        alert(res.data.message || 'Не удалось прокрутить колесо, попробуйте позже.');
+        document.getElementById('spinning-text').classList.add('hidden');
+        alert(res.data.message || 'Не вдалося прокрутити колесо, спробуй пізніше.');
       }
     });
   });
 
-  // ---------- Инициализация ----------
+  // ---------- Ініціалізація ----------
   Promise.all([api('/api/config'), api('/api/me')]).then(function (results) {
     var config = results[0].data;
     var me = results[1].data;
 
-    initGateForm(config);
-    startFactsCycle(config.facts);
+    initContent(config);
 
     if (me.registered && me.spun) {
-      renderUsedScreen('Вы уже участвовали в акции и прокрутили колесо.', me.prize);
+      setWheelInstant(-segDeg / 2);
+      renderUsedScreen('Ти вже брав участь в акції і прокрутив колесо.', me.prize);
     } else if (me.registered) {
       showScreen('main');
-      startCelebration(4000);
     } else {
       showScreen('gate');
     }

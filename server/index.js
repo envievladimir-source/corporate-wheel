@@ -23,11 +23,11 @@ const ALLOWED_DOMAINS = (process.env.ALLOWED_EMAIL_DOMAINS || 'company.com')
   .split(',')
   .map((d) => d.trim().toLowerCase())
   .filter(Boolean);
-const COUNTRIES = (process.env.COUNTRIES || 'Украина,Польша,Кипр')
+const COUNTRIES = (process.env.COUNTRIES || 'Україна,Польща,Кіпр')
   .split(',')
   .map((c) => c.trim())
   .filter(Boolean)
-  .concat(['Другая']);
+  .concat(['Інша']);
 const ENABLE_IP_LOCK = String(process.env.ENABLE_IP_LOCK || 'true').toLowerCase() === 'true';
 const COOKIE_NAME = 'cw_session';
 
@@ -70,8 +70,9 @@ const FUN_FACTS = (process.env.FUN_FACTS || '')
 
 app.get('/api/config', (req, res) => {
   res.json({
-    companyName: process.env.COMPANY_NAME || 'Company',
+    companyName: process.env.COMPANY_NAME || 'Evoplay',
     anniversaryYears: process.env.ANNIVERSARY_YEARS || '10',
+    superPrizeTitle: process.env.SUPER_PRIZE_TITLE || 'ДЖЕКПОТ',
     countries: COUNTRIES,
     allowedDomainsHint: ALLOWED_DOMAINS.map((d) => `@${d}`).join(', '),
     facts: FUN_FACTS,
@@ -94,27 +95,27 @@ app.post('/api/register', (req, res) => {
   const { email, country } = req.body || {};
 
   if (typeof email !== 'string' || typeof country !== 'string') {
-    return res.status(400).json({ error: 'invalid_input', message: 'Заполните все поля.' });
+    return res.status(400).json({ error: 'invalid_input', message: 'Заповни всі поля.' });
   }
 
   const normalizedEmail = email.trim().toLowerCase();
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   if (!emailPattern.test(normalizedEmail)) {
-    return res.status(400).json({ error: 'invalid_email', message: 'Некорректный email.' });
+    return res.status(400).json({ error: 'invalid_email', message: 'Некоректний email.' });
   }
 
   if (!emailDomainAllowed(normalizedEmail)) {
     return res.status(400).json({
       error: 'domain_not_allowed',
-      message: `Регистрация доступна только с корпоративной почтой (${ALLOWED_DOMAINS
+      message: `Реєстрація доступна лише з корпоративної пошти (${ALLOWED_DOMAINS
         .map((d) => '@' + d)
         .join(', ')}).`,
     });
   }
 
   if (!COUNTRIES.includes(country)) {
-    return res.status(400).json({ error: 'invalid_country', message: 'Выберите страну из списка.' });
+    return res.status(400).json({ error: 'invalid_country', message: 'Обери країну зі списку.' });
   }
 
   // Уже есть активная сессия — просто вернём её состояние вместо повторной регистрации
@@ -122,7 +123,7 @@ app.post('/api/register', (req, res) => {
   if (existingByCookie) {
     return res.status(409).json({
       error: 'already_registered',
-      message: 'Вы уже участвуете в акции.',
+      message: 'Ти вже береш участь в акції.',
       spun: Boolean(existingByCookie.spun_at),
     });
   }
@@ -131,7 +132,7 @@ app.post('/api/register', (req, res) => {
   if (existingByEmail) {
     return res.status(409).json({
       error: 'email_already_used',
-      message: 'Упс, с этой почты уже участвовали в акции.',
+      message: 'Упс, з цієї пошти вже брали участь в акції.',
     });
   }
 
@@ -141,7 +142,7 @@ app.post('/api/register', (req, res) => {
     if (existingByIp) {
       return res.status(409).json({
         error: 'ip_already_used',
-        message: 'Упс, с этого устройства/сети уже участвовали в акции.',
+        message: 'Упс, з цього пристрою/мережі вже брали участь в акції.',
       });
     }
   }
@@ -164,18 +165,18 @@ app.post('/api/spin', (req, res) => {
   const entry = findEntryByToken(req.signedCookies[COOKIE_NAME]);
 
   if (!entry) {
-    return res.status(401).json({ error: 'not_registered', message: 'Сначала пройдите регистрацию.' });
+    return res.status(401).json({ error: 'not_registered', message: 'Спочатку пройди реєстрацію.' });
   }
 
   if (entry.spun_at) {
     return res.status(409).json({
       error: 'already_spun',
-      message: 'Упс, ты уже прокручивал колесо.',
+      message: 'Упс, ти вже крутив колесо.',
       prize: entry.prize,
     });
   }
 
-  const prize = process.env.SUPER_PRIZE_TITLE || 'СУПЕР ПРИЗ';
+  const prize = process.env.SUPER_PRIZE_TITLE || 'ДЖЕКПОТ';
 
   db.markSpun(entry.id, prize);
 
@@ -184,7 +185,7 @@ app.post('/api/spin', (req, res) => {
     prize,
     description:
       process.env.SUPER_PRIZE_DESCRIPTION ||
-      'Сертификат на 10 000 грн, который можно потратить в любом магазине-партнёре компании.',
+      'Сьогодні виграють усі — бо 10 років Evoplay це і є наш спільний джекпот. Деталі призу шукай у HR!',
   });
 });
 
