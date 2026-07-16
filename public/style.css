@@ -39,12 +39,15 @@ body {
 }
 .balloons.hidden { opacity: 0; }
 
-.balloon { position: absolute; top: 0; }
-.balloon-body {
-  border-radius: 50% 50% 50% 50% / 44% 44% 56% 56%;
+.balloon {
+  position: absolute;
+  top: 0;
   animation-name: floatUp, sway;
   animation-timing-function: linear, ease-in-out;
   animation-iteration-count: infinite, infinite;
+}
+.balloon-body {
+  border-radius: 50% 50% 50% 50% / 44% 44% 56% 56%;
 }
 .balloon-string { width: 2px; background: var(--string); margin: 0 auto; }
 
